@@ -137,45 +137,35 @@
 
 
 import mongoose from "mongoose";
+import * as productService from "../services/productService.js";
 import Product from "../models/productModel.js";
 
-// =============================
-// CREATE PRODUCT
-// =============================
 export const createProduct = async (req, res) => {
     try {
         const productData = req.body;
-
-        // Trim and validate required fields
-        if (
-            !productData.name?.trim() ||
-            !productData.productCode?.trim() ||
-            !productData.category?.trim() ||
-            !productData.metalType?.trim()
-        ) {
+        if (!productData.name || !productData.productCode || !productData.category || !productData.metalType) {
             return res.status(400).json({ success: false, message: "Missing required fields!" });
         }
-
-        // Normalize image paths
-        if (req.files && Array.isArray(req.files)) {
-            productData.images = req.files.map(file => file.path.replace(/\\/g, "/"));
+        
+        if (req.files && req.files.length > 0) {
+            productData.images = req.files.map(file => file.path);
         }
-
+        
         const newProduct = await Product.create(productData);
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
-        console.error("Create Product Error:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
 
-// =============================
-// GET ALL PRODUCTS
-// =============================
+
 export const getAllProducts = async (req, res) => {
     try {
+        console.log("Fetching products..."); // 👈 Debug log
         const products = await Product.find();
+        console.log("Products Fetched:", products); // 👈 Data print 
+
         res.status(200).json(products);
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -184,42 +174,41 @@ export const getAllProducts = async (req, res) => {
 };
 
 
-// =============================
-// GET PRODUCT BY CATEGORY
-// =============================
+
 export const getProductsByCategory = async (req, res) => {
     try {
-        const { category } = req.params;
-        const products = await Product.find({ category });
+        let category = req.params.category;
+
+        // ✅ Remove hyphens & make case-insensitive
+        category = category.replace(/-/g, " ").toLowerCase();
+
+        const products = await Product.find({
+            category: { $regex: new RegExp("^" + category + "$", "i") }
+        });
 
         if (!products.length) {
-            return res.status(404).json({ message: "No products found in this category" });
+            return res.status(404).json({ message: "No products found!" });
         }
 
-        res.status(200).json(products);
+        res.json({ success: true, data: products });
     } catch (error) {
-        console.error("Category Fetch Error:", error);
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Server error", error });
     }
 };
 
 
-// =============================
-// GET PRODUCT BY ID
-// =============================
+
+
 export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
-
         const product = await Product.findById(id);
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
-
         res.status(200).json({ success: true, data: product });
     } catch (error) {
         console.error("Get Product By ID Error:", error);
@@ -228,22 +217,19 @@ export const getProductById = async (req, res) => {
 };
 
 
-// =============================
-// UPDATE PRODUCT
-// =============================
+
+
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // ✅ Check if ID is a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
 
         let updateData = req.body;
-
-        // ❌ Remove restricted fields from update
-        const restrictedFields = ['productCode', '_id', 'createdAt'];
-        restrictedFields.forEach(field => delete updateData[field]);
+        delete updateData.productCode;
 
         const existingProduct = await Product.findById(id);
         if (!existingProduct) {
@@ -260,13 +246,14 @@ export const updateProduct = async (req, res) => {
 };
 
 
-// =============================
-// DELETE PRODUCT
-// =============================
+
+
+
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // ✅ Check if ID is a valid ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
