@@ -40,15 +40,22 @@ export const getAllProducts = async (req, res) => {
 
 
 
+// Get Products by Category
 export const getProductsByCategory = async (req, res) => {
     try {
-        const category = req.params.category;
+        const { category } = req.params;
         const products = await Product.find({ category });
+
+        if (!products.length) {
+            return res.status(404).json({ message: "No products found in this category" });
+        }
+
         res.status(200).json(products);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching products by category", error });
+        res.status(500).json({ message: error.message });
     }
 };
+
 
 
 
