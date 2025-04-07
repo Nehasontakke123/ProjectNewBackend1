@@ -98,7 +98,7 @@ import http from "http";
 import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
-import multer from "multer";
+// import multer from "multer";
 
 import dbConnect from "./db/connectDB.js";
 
