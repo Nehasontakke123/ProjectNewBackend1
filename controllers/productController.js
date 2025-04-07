@@ -42,24 +42,36 @@ export const getAllProducts = async (req, res) => {
 
 export const getProductsByCategory = async (req, res) => {
     try {
-        let category = req.params.category;
-
-        // ✅ Remove hyphens & make case-insensitive
-        category = category.replace(/-/g, " ").toLowerCase();
-
-        const products = await Product.find({
-            category: { $regex: new RegExp("^" + category + "$", "i") }
-        });
-
-        if (!products.length) {
-            return res.status(404).json({ message: "No products found!" });
-        }
-
-        res.json({ success: true, data: products });
+        const category = req.params.category;
+        const products = await Product.find({ category });
+        res.status(200).json(products);
     } catch (error) {
-        res.status(500).json({ message: "Server error", error });
+        res.status(500).json({ message: "Error fetching products by category", error });
     }
 };
+
+
+
+// export const getProductsByCategory = async (req, res) => {
+//     try {
+//         let category = req.params.category;
+
+//         // ✅ Remove hyphens & make case-insensitive
+//         category = category.replace(/-/g, " ").toLowerCase();
+
+//         const products = await Product.find({
+//             category: { $regex: new RegExp("^" + category + "$", "i") }
+//         });
+
+//         if (!products.length) {
+//             return res.status(404).json({ message: "No products found!" });
+//         }
+
+//         res.json({ success: true, data: products });
+//     } catch (error) {
+//         res.status(500).json({ message: "Server error", error });
+//     }
+// };
 
 
 
