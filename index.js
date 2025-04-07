@@ -124,15 +124,15 @@ app.use(express.json());
 // app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
 app.use("/uploads", express.static("uploads")); 
 // ✅ Multer Config (for file uploads)
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "uploads/");
-    },
-    filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    },
-});
-export const upload = multer({ storage });
+// const storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, "uploads/");
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, `${Date.now()}-${file.originalname}`);
+//     },
+// });
+// export const upload = multer({ storage });
 
 // ✅ Socket.IO Setup
 const io = new Server(server, {
