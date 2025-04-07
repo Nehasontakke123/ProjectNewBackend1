@@ -85,7 +85,7 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/exchange", exchangeRoutes);
 
 const PORT = process.env.PORT || 7001;
-server.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
 
 export { io };
 export default server;
