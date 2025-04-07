@@ -121,8 +121,8 @@ const __dirname = path.resolve();
 // ✅ Middlewares
 app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }));
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
-
+// app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Serve uploaded files
+app.use("/uploads", express.static("uploads")); 
 // ✅ Multer Config (for file uploads)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
