@@ -1,12 +1,15 @@
 {
-    "version": 2,
-    "ignoreCommand": "echo 'Skipping backend folder deployment on Vercel'",
-  
-    "rewrites": [
+  "version": 2,
+  "builds": [
       {
-        "source": "/api/(.*)",
-        "destination": "https://your-backend-url.com/api/$1"
+          "src": "index.js",
+          "use": "@vercel/node"
       }
-    ]
-  }
-  
+  ],
+  "routes": [
+      {
+          "src": "/(.*)",
+          "dest": "index.js"
+      }
+  ]
+}
