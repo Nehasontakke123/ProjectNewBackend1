@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
     category: { type: String, required: true, enum: [
          "All Jewellery", "Gold Pendants", "Diamond Pendants",
          "Gold Earrings", "Diamond Earrings", "Diamond Rings", "Gold Rings", "Diamond Bangles", "Gold Bangles",
-        "Diamond Mangalsutra", "Gold Mangalsutra", "Men Jewellery", "Diamond Bracelets","Gold Bracelets","Diamond Necklace","Gold Necklace"
+        "Diamond Mangalsutra", "Gold Mangalsutra", "Men Jewellery", "Diamond Bracelets","Gold Bracelets","Diamond Necklace","Gold Necklace", "Baby"
     ] },
     metalType: { type: String, required: true, enum: ["Gold", "Silver", "Platinum"] },
     goldColor: { type: String, required: true, enum: ["Yellow", "White", "Rose","Two-Tone","Silver"] },
