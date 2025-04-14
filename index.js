@@ -17,6 +17,7 @@ import productRoutes from "./routes/productRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import exchangeRoutes from "./routes/exchangeRoutes.js";
 import authRoutes from './routes/authRoutes.js';
+import smsRoutes from './routes/smsRoutes.js'; 
 
 dotenv.config();
 dbConnect(process.env.DBURL, process.env.DBNAME);
@@ -42,47 +43,119 @@ app.use("/uploads", express.static("uploads"));
 // export const upload = multer({ storage });
 
 // ✅ Socket.IO Setup
+// const io = new Server(server, {
+//     cors: { origin: "*" },
+// });
+
+// io.on("connection", (socket) => {
+//     console.log("🟢 Client connected");
+
+//     socket.on("vanLocation", (data) => {
+//         io.emit("updateLocation", data);
+//     });
+
+//     socket.on("videoStream", (data) => {
+//         io.emit("broadcastStream", data);
+//     });
+
+//     socket.on("offer", (data) => {
+//         socket.broadcast.emit("offer", data);
+//     });
+
+//     socket.on("answer", (data) => {
+//         socket.broadcast.emit("answer", data);
+//     });
+
+//     socket.on("ice-candidate", (data) => {
+//         socket.broadcast.emit("ice-candidate", data);
+//     });
+
+//     socket.on("disconnect", () => {
+//         console.log("🔴 Client disconnected");
+//     });
+// });
+
+// // ✅ WebRTC Offer Route (optional)
+// app.post("/api/webrtc/offer", async (req, res) => {
+//     try {
+//         console.log("Received WebRTC Offer:", req.body.offer);
+//         res.json({ message: "Offer received" });
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// });
+
+
+
+
+// const { Server } = require("socket.io");
+
 const io = new Server(server, {
     cors: { origin: "*" },
 });
 
-io.on("connection", (socket) => {
-    console.log("🟢 Client connected");
+const users = {}; // userId -> socket.id map
 
+io.on("connection", (socket) => {
+    console.log("🟢 Client connected:", socket.id);
+
+    // 🔐 Register user (Ex: userId = 'customer1' or 'vendor123')
+    socket.on("register", (userId) => {
+        users[userId] = socket.id;
+        console.log(`✅ Registered: ${userId} -> ${socket.id}`);
+    });
+
+    // 📍 Van Location broadcast
     socket.on("vanLocation", (data) => {
         io.emit("updateLocation", data);
     });
 
+    // 📡 Video stream (if needed for non-WebRTC)
     socket.on("videoStream", (data) => {
         io.emit("broadcastStream", data);
     });
 
-    socket.on("offer", (data) => {
-        socket.broadcast.emit("offer", data);
+    // 📞 Offer - Send only to receiver
+    socket.on("offer", ({ offer, to }) => {
+        const receiverSocketId = users[to];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("offer", offer);
+            console.log(`📨 Offer sent to ${to}`);
+        }
     });
 
-    socket.on("answer", (data) => {
-        socket.broadcast.emit("answer", data);
+    // ✅ Answer - Send back to caller
+    socket.on("answer", ({ answer, to }) => {
+        const callerSocketId = users[to];
+        if (callerSocketId) {
+            io.to(callerSocketId).emit("answer", answer);
+            console.log(`✅ Answer sent to ${to}`);
+        }
     });
 
-    socket.on("ice-candidate", (data) => {
-        socket.broadcast.emit("ice-candidate", data);
+    // 🌐 ICE Candidate - Send to specific peer
+    socket.on("ice-candidate", ({ candidate, to }) => {
+        const targetSocketId = users[to];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit("ice-candidate", candidate);
+        }
     });
 
     socket.on("disconnect", () => {
-        console.log("🔴 Client disconnected");
+        console.log("🔴 Client disconnected:", socket.id);
+        // Cleanup
+        for (const userId in users) {
+            if (users[userId] === socket.id) {
+                delete users[userId];
+                console.log(`🗑 Removed user mapping: ${userId}`);
+                break;
+            }
+        }
     });
 });
 
-// ✅ WebRTC Offer Route (optional)
-app.post("/api/webrtc/offer", async (req, res) => {
-    try {
-        console.log("Received WebRTC Offer:", req.body.offer);
-        res.json({ message: "Offer received" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+
+
 
 // ✅ Routes
 app.use("/api/repair", repairRoutes);
@@ -93,6 +166,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/exchange", exchangeRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api', smsRoutes);
 
 // ✅ Server Start
 const PORT = process.env.PORT || 7001;
