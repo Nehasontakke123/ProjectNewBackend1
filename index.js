@@ -18,6 +18,9 @@ import videoRoutes from "./routes/videoRoutes.js";
 import exchangeRoutes from "./routes/exchangeRoutes.js";
 import authRoutes from './routes/authRoutes.js';
 import smsRoutes from './routes/smsRoutes.js'; 
+import goldRoutes from './routes/gold.js';
+import './cron/goldPriceCron.js'; // Start cron job
+import designRoutes from './routes/designRoutes.js';
 
 dotenv.config();
 dbConnect(process.env.DBURL, process.env.DBNAME);
@@ -168,10 +171,12 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/exchange", exchangeRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', smsRoutes);
+app.use('/api/gold', goldRoutes);
+app.use('/api/designs', designRoutes);
 
 // ✅ Server Start
 const PORT = process.env.PORT || 7001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
 // ✅ Export IO (optional if used in controller)
 export { io };
