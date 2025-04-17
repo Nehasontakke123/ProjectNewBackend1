@@ -46,9 +46,11 @@
 
 
 
-
-import Twilio from 'twilio';  // Import Twilio SDK
+import fs from 'fs';
+import path from 'path';
 import Video from '../models/VideoModel.js';
+import Twilio from 'twilio'; // Import Twilio SDK
+// require('dotenv').config();
 
 // Twilio credentials from environment variables
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -56,35 +58,37 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const client = Twilio(accountSid, authToken); // Twilio client
 
-// Controller for uploading video and sending SMS with video link
+// Function to upload video and send WhatsApp message with video call link
 export const uploadVideo = async (req, res) => {
     try {
         const videoUrl = req.file.path; // Path of the uploaded video
         const phoneNumber = req.body.phoneNumber; // Get phone number from request body
 
-        // Construct the video call link with a timestamp
-        const timestamp = new Date().getTime();
-        const videoCallLink = `https://yourdomain.com/video-call/${timestamp}`;
-
-        // Send SMS to the provided phone number with the video call link
-        await client.messages.create({
-            body: `Hello! You have a video call. Join using the link: ${videoCallLink}`,
-            from: twilioPhoneNumber,  // Your Twilio phone number
-            to: phoneNumber,          // Recipient phone number
+        // Save video details to the database
+        const newVideo = new Video({
+            videoUrl: videoUrl,
+            phoneNumber: phoneNumber,
         });
 
-        // Save video details in your database (optional)
-        const video = new Video({ videoUrl, phoneNumber });
-        await video.save();
+        await newVideo.save();
 
-        res.status(200).json({ message: "Video uploaded and SMS sent", videoUrl, videoCallLink });
+        // Construct the message with the video call link
+        const videoCallLink = `https://yourdomain.com/video-call/${videoUrl}`;
+
+        // Send WhatsApp message with the video call link
+        await client.messages.create({
+            body: `Hello! You have a video call. Join using the link: ${videoCallLink}`,
+            from: `whatsapp:${twilioPhoneNumber}`,  // Your Twilio WhatsApp number
+            to: `whatsapp:+919359481880}`,          // Recipient phone number (WhatsApp format)
+        });
+
+        res.status(200).json({ message: "Video uploaded and WhatsApp message sent", videoUrl });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
-
-
+// Function to retrieve all videos from the database
 export const getVideos = async (req, res) => {
     try {
         const videos = await Video.find();
@@ -92,4 +96,22 @@ export const getVideos = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+
+// Controller function to send WhatsApp message (standalone message)
+export const sendWhatsAppMessage = (req, res) => {
+    const { to, messageBody } = req.body;  // You can pass the recipient's number and message through the request body
+
+    client.messages.create({
+        body: messageBody || 'Hello, this is a test message from Twilio!', // Default message if not provided
+        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,  // Twilio WhatsApp number
+        to: `whatsapp:${to}`  // The recipient's WhatsApp number passed via the request body
+    })
+    .then(message => {
+        res.status(200).send({ success: true, messageSid: message.sid });
+    })
+    .catch(error => {
+        console.error(error);
+        res.status(500).send({ success: false, error: error.message });
+    });
 };

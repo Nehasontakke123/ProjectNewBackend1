@@ -23,7 +23,7 @@ import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-import { uploadVideo, getVideos } from '../controllers/videoController.js';
+import { uploadVideo, getVideos,sendWhatsAppMessage } from '../controllers/videoController.js';
 
 const router = express.Router();
 
@@ -49,5 +49,6 @@ const upload = multer({ storage });
 
 router.post('/upload', upload.single('video'), uploadVideo);
 router.get('/videos', getVideos);
+router.post('/send-whatsapp', sendWhatsAppMessage);
 
 export default router;
