@@ -181,23 +181,27 @@ export const getVideos = async (req, res) => {
 // ✅ Standalone WhatsApp message sender
 // videoController.js
 
+// const client = twilio(accountSid, authToken);
+
 export const sendWhatsAppMessage = async (req, res) => {
     const { to, messageBody, videoUrl } = req.body;
   
-    console.log("🟢 Incoming data:", to, messageBody, videoUrl);
-  
     try {
-      // Twilio / WhatsApp logic
-      // Example dummy logic (if you're not using Twilio)
-      if (!to || !messageBody || !videoUrl) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
+      const fullMessage = `${messageBody}\n${videoUrl}`;
+      
+      const message = await client.messages.create({
+        from: 'whatsapp:+14155238886', // Twilio sandbox
+        to: `whatsapp:+91${to}`,
+        body: fullMessage,
+      });
   
-      // Simulate success
-      return res.status(200).json({ message: "WhatsApp message sent successfully!" });
-    } catch (err) {
-      console.error("❌ Backend Error:", err.message);
-      res.status(500).json({ message: "Internal Server Error", error: err.message });
+      console.log("✅ WhatsApp Sent:", message.sid);
+      res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
+  
+    } catch (error) {
+      console.error("❌ Error sending WhatsApp:", error.message);
+      res.status(500).json({ message: "Failed", error: error.message });
     }
   };
+  
   
