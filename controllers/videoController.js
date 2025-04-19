@@ -27,7 +27,7 @@ export const uploadVideo = async (req, res) => {
         const videoFileName = path.basename(videoUrl);
 
         // Construct the public video call link
-        const videoCallLink = `https://yourdomain.com/video-call/${videoFileName}`;
+        const videoCallLink = `https://us05web.zoom.us/j/84223349123?pwd=IKmZfbMtmJuQsSofbm78f8xi1pzJ1z.1/${videoFileName}`;
 
         // Send WhatsApp message using Twilio
         await client.messages.create({
