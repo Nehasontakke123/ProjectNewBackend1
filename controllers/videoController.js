@@ -62,16 +62,39 @@ export const getVideos = async (req, res) => {
 
 // const client = twilio(accountSid, authToken);
 
+// export const sendWhatsAppMessage = async (req, res) => {
+//     const { to, messageBody, videoUrl } = req.body;
+  
+//     try {
+//       const fullMessage = `${messageBody}\n${videoUrl}`;
+      
+//       const message = await client.messages.create({
+//         from: 'whatsapp:+14155238886', // Twilio sandbox
+//         to: `whatsapp:+91${to}`,
+//         body: fullMessage,
+//       });
+  
+//       console.log("✅ WhatsApp Sent:", message.sid);
+//       res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
+  
+//     } catch (error) {
+//       console.error("❌ Error sending WhatsApp:", error.message);
+//       res.status(500).json({ message: "Failed", error: error.message });
+//     }
+//   };
+  
+  
+
+
 export const sendWhatsAppMessage = async (req, res) => {
     const { to, messageBody, videoUrl } = req.body;
   
     try {
-      const fullMessage = `${messageBody}\n${videoUrl}`;
-      
       const message = await client.messages.create({
-        from: 'whatsapp:+14155238886', // Twilio sandbox
+        from: 'whatsapp:+14155238886', // Twilio Sandbox WhatsApp number
         to: `whatsapp:+91${to}`,
-        body: fullMessage,
+        body: messageBody,
+        mediaUrl: [videoUrl], // Add video URL here
       });
   
       console.log("✅ WhatsApp Sent:", message.sid);
@@ -82,5 +105,4 @@ export const sendWhatsAppMessage = async (req, res) => {
       res.status(500).json({ message: "Failed", error: error.message });
     }
   };
-  
   
