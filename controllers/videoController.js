@@ -62,25 +62,49 @@ export const getVideos = async (req, res) => {
 
 // const client = twilio(accountSid, authToken);
 
+// export const sendWhatsAppMessage = async (req, res) => {
+//     const { to, messageBody, videoUrl } = req.body;
+  
+//     try {
+//       const fullMessage = `${messageBody}\n${videoUrl}`;
+      
+//       const message = await client.messages.create({
+//         from: 'whatsapp:+14155238886', // Twilio sandbox
+//         to: `whatsapp:+91${to}`,
+//         body: fullMessage,
+//       });
+  
+//       console.log("✅ WhatsApp Sent:", message.sid);
+//       res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
+  
+//     } catch (error) {
+//       console.error("❌ Error sending WhatsApp:", error.message);
+//       res.status(500).json({ message: "Failed", error: error.message });
+//     }
+//   };
+  
+  
+
 export const sendWhatsAppMessage = async (req, res) => {
     const { to, messageBody, videoUrl } = req.body;
-  
+
     try {
-      const fullMessage = `${messageBody}\n${videoUrl}`;
-      
-      const message = await client.messages.create({
-        from: 'whatsapp:+14155238886', // Twilio sandbox
-        to: `whatsapp:+91${to}`,
-        body: fullMessage,
-      });
-  
-      console.log("✅ WhatsApp Sent:", message.sid);
-      res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
-  
+        const fullMessage = `${messageBody}\n${videoUrl}`;
+        const message = await client.messages.create({
+            from: `whatsapp:${twilioPhoneNumber}`, // Twilio WhatsApp number
+            to: `whatsapp:+91${to}`, // The phone number, ensure +91 is there.
+            body: fullMessage
+        });
+
+        console.log("✅ WhatsApp Sent:", message.sid);
+        res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
     } catch (error) {
-      console.error("❌ Error sending WhatsApp:", error.message);
-      res.status(500).json({ message: "Failed", error: error.message });
+        console.error("❌ Error sending WhatsApp:", error.message);
+        if (error.response) {
+            console.error("Twilio API error:", error.response.data);
+        } else {
+            console.error("Network or unknown error:", error.message);
+        }
+        res.status(500).json({ message: "Failed", error: error.message });
     }
-  };
-  
-  
+};
