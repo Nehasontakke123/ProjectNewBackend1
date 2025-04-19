@@ -85,7 +85,6 @@ export const getVideos = async (req, res) => {
   
   
 
-
 export const sendWhatsAppMessage = async (req, res) => {
     const { to, messageBody, videoUrl } = req.body;
   
@@ -93,8 +92,8 @@ export const sendWhatsAppMessage = async (req, res) => {
       const message = await client.messages.create({
         from: 'whatsapp:+14155238886', // Twilio Sandbox WhatsApp number
         to: `whatsapp:+91${to}`,
-        body: messageBody,
-        mediaUrl: [videoUrl], // Add video URL here
+        body: `${messageBody}\n${videoUrl}` // ✅ Add link in message body itself
+        // ❌ Don't use mediaUrl here since it's not an actual media file
       });
   
       console.log("✅ WhatsApp Sent:", message.sid);
