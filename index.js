@@ -21,6 +21,7 @@ import smsRoutes from './routes/smsRoutes.js';
 import goldRoutes from './routes/gold.js';
 import './cron/goldPriceCron.js'; // Start cron job
 import designRoutes from './routes/designRoutes.js';
+import reelRoutes from './routes/reelRoutes.js'
 
 dotenv.config();
 dbConnect(process.env.DBURL, process.env.DBNAME);
@@ -115,6 +116,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', smsRoutes);
 app.use('/api/gold', goldRoutes);
 app.use('/api/designs', designRoutes);
+
+app.use('/api/reels', reelRoutes);
 
 // ✅ Server Start
 const PORT = process.env.PORT || 7001;
