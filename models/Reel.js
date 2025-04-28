@@ -1,16 +1,10 @@
-// models/Reel.js
 import mongoose from 'mongoose';
 
 const reelSchema = new mongoose.Schema({
   caption: String,
-  videoUrl: String,
   songTitle: String,
   songUrl: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  videoUrl: String,
+}, { timestamps: true });
 
-const Reel = mongoose.model('Reel', reelSchema);
-export default Reel;
+export default mongoose.model('Reel', reelSchema);

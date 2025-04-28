@@ -2,9 +2,6 @@
 // import * as productService from "../services/productService.js";
 // import Product from "../models/productModel.js";
 
-
-
-
 // export const createProduct = async (req, res) => {
 //     try {
 //         const productData = req.body;
@@ -40,23 +37,26 @@
 
 
 
-// // Get Products by Category
 // export const getProductsByCategory = async (req, res) => {
 //     try {
-//         const { category } = req.params;
-//         const products = await Product.find({ category });
+//         let category = req.params.category;
+
+//         // ✅ Remove hyphens & make case-insensitive
+//         category = category.replace(/-/g, " ").toLowerCase();
+
+//         const products = await Product.find({
+//             category: { $regex: new RegExp("^" + category + "$", "i") }
+//         });
 
 //         if (!products.length) {
-//             return res.status(404).json({ message: "No products found in this category" });
+//             return res.status(404).json({ message: "No products found!" });
 //         }
 
-//         res.status(200).json(products);
+//         res.json({ success: true, data: products });
 //     } catch (error) {
-//         res.status(500).json({ message: error.message });
+//         res.status(500).json({ message: "Server error", error });
 //     }
 // };
-
-
 
 
 
@@ -137,34 +137,37 @@
 
 
 import mongoose from "mongoose";
-import * as productService from "../services/productService.js";
 import Product from "../models/productModel.js";
 
+// Create Product
 export const createProduct = async (req, res) => {
     try {
         const productData = req.body;
+
+        // Validate required fields
         if (!productData.name || !productData.productCode || !productData.category || !productData.metalType) {
             return res.status(400).json({ success: false, message: "Missing required fields!" });
         }
-        
+
+        // Handle file uploads (images)
         if (req.files && req.files.length > 0) {
             productData.images = req.files.map(file => file.path);
         }
-        
+
         const newProduct = await Product.create(productData);
         res.status(201).json({ success: true, data: newProduct });
     } catch (error) {
+        console.error("Create Product Error:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
-
-
+// Get All Products
 export const getAllProducts = async (req, res) => {
     try {
-        console.log("Fetching products..."); // 👈 Debug log
+        console.log("Fetching products...");
         const products = await Product.find();
-        console.log("Products Fetched:", products); // 👈 Data print 
+        console.log("Products Fetched:", products);
 
         res.status(200).json(products);
     } catch (error) {
@@ -173,17 +176,16 @@ export const getAllProducts = async (req, res) => {
     }
 };
 
-
-
+// Get Products By Category
 export const getProductsByCategory = async (req, res) => {
     try {
         let category = req.params.category;
 
-        // ✅ Remove hyphens & make case-insensitive
+        // Make category lowercase and replace hyphens with spaces
         category = category.replace(/-/g, " ").toLowerCase();
 
         const products = await Product.find({
-            category: { $regex: new RegExp("^" + category + "$", "i") }
+            category: { $regex: new RegExp(category, "i") }  // Case-insensitive search
         });
 
         if (!products.length) {
@@ -192,23 +194,26 @@ export const getProductsByCategory = async (req, res) => {
 
         res.json({ success: true, data: products });
     } catch (error) {
+        console.error("Get Products By Category Error:", error);
         res.status(500).json({ message: "Server error", error });
     }
 };
 
-
-
-
+// Get Product By ID
 export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
+
         const product = await Product.findById(id);
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
+
         res.status(200).json({ success: true, data: product });
     } catch (error) {
         console.error("Get Product By ID Error:", error);
@@ -216,19 +221,19 @@ export const getProductById = async (req, res) => {
     }
 };
 
-
-
-
+// Update Product
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // ✅ Check if ID is a valid ObjectId
+        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
 
         let updateData = req.body;
+
+        // Don't update productCode
         delete updateData.productCode;
 
         const existingProduct = await Product.findById(id);
@@ -237,7 +242,6 @@ export const updateProduct = async (req, res) => {
         }
 
         const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
-
         res.status(200).json({ success: true, message: "Product updated successfully", data: updatedProduct });
     } catch (error) {
         console.error("Update Product Error:", error);
@@ -245,15 +249,12 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-
-
-
-
+// Delete Product
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // ✅ Check if ID is a valid ObjectId
+        // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: "Invalid Product ID" });
         }
@@ -269,4 +270,3 @@ export const deleteProduct = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
-

@@ -1,22 +1,22 @@
 import express from 'express';
 import multer from 'multer';
-import { createReel, getAllReels } from '../controllers/reelController.js';
+import { uploadReel, getAllReels } from '../controllers/reelController.js';
 
 const router = express.Router();
 
+// Multer Setup
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    const unique = Date.now() + '-' + file.originalname;
-    cb(null, unique);
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
-
 const upload = multer({ storage });
 
-router.post('/', upload.single('video'), createReel);
+// Routes
+router.post('/', upload.single('video'), uploadReel);
 router.get('/', getAllReels);
 
 export default router;
