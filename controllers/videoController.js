@@ -70,7 +70,7 @@ export const sendWhatsAppMessage = async (req, res) => {
       
       const message = await client.messages.create({
         from: 'whatsapp:+14155238886', // Twilio sandbox
-        to: `whatsapp:+91${to}`,
+        to: `whatsapp:${to}`,
         body: fullMessage,
       });
   
