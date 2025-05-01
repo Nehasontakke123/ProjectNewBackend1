@@ -12,10 +12,13 @@ const client = Twilio(accountSid, authToken);
 // ✅ Function to upload video and send WhatsApp message with video call link
 export const uploadVideo = async (req, res) => {
     try {
-        const videoUrl = req.file.path; // Path of the uploaded video
-        const phoneNumber = req.body.phoneNumber; // Phone number from frontend
+        const phoneNumber = req.body.phoneNumber;
 
-        // Save video info to MongoDB
+        // ✅ Cloudinary video URL (after upload)
+        const uploadedVideo = req.file;
+        const videoUrl = uploadedVideo.path; // This is secure_url from Cloudinary
+
+        // ✅ Save video info to MongoDB
         const newVideo = new Video({
             videoUrl: videoUrl,
             phoneNumber: phoneNumber,
@@ -23,25 +26,25 @@ export const uploadVideo = async (req, res) => {
 
         await newVideo.save();
 
-        // Extract only file name for cleaner URL
-        const videoFileName = path.basename(videoUrl);
+        // ✅ Fixed Zoom Meeting Link (no file name should be added here)
+        const zoomLink = `https://us05web.zoom.us/j/84223349123?pwd=IKmZfbMtmJuQsSofbm78f8xi1pzJ1z.1`;
 
-        // Construct the public video call link
-        const videoCallLink = `https://us05web.zoom.us/j/84223349123?pwd=IKmZfbMtmJuQsSofbm78f8xi1pzJ1z.1/${videoFileName}`;
+        // ✅ WhatsApp Message
+        const messageBody = `👋 Hello! You have a video call.\n\n🔗 Join Zoom: ${zoomLink}\n📹 Uploaded Video: ${videoUrl}`;
 
-        // Send WhatsApp message using Twilio
         await client.messages.create({
-            body: `Hello! You have a video call. Join using the link: ${videoCallLink}`,
+            body: messageBody,
             from: `whatsapp:${twilioPhoneNumber}`,
             to: `whatsapp:${phoneNumber}`,
         });
 
         res.status(200).json({
-            message: "Video uploaded and WhatsApp message sent successfully",
-            videoUrl: `/uploads/${videoFileName}`, // Return clean public URL
+            message: "✅ Video uploaded and WhatsApp message sent successfully",
+            videoUrl: videoUrl, // Cloudinary public URL
         });
+
     } catch (err) {
-        console.error("Error uploading video:", err);
+        console.error("❌ Error uploading video:", err);
         res.status(500).json({ error: err.message });
     }
 };
