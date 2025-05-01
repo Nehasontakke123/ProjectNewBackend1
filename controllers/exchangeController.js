@@ -6,38 +6,44 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 
 // ✅ Create Request + Save OTP
 export const createRequest = async (req, res) => {
-    const { customerName, customerEmail, customerPhone, jewelleryDetails, purpose } = req.body;
-    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-  
-    try {
-      const newRequest = await JewelleryRequest.create({
-        customerName,
-        customerEmail,
-        customerPhone,
-        jewelleryDetails,
-        purpose,
-        otp
-      });
-  
-      console.log("Generated OTP:", otp);
-      console.log("Saved Request:", newRequest);
-  
-      // Send OTP via SMS
-      await client.messages.create({
-        body: `Your OTP for Jewellery transaction is: ${otp}`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: customerPhone,
-      });
-  
-      // ✅ THIS LINE: Response to client with requestId
-      res.status(201).json({
-        message: "Request created and OTP sent",
-        requestId: newRequest._id
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
+  const { customerName, customerEmail, customerPhone, jewelleryDetails, purpose } = req.body;
+  const otp = Math.floor(100000 + Math.random() * 900000);
+
+  try {
+    const newRequest = await JewelleryRequest.create({
+      customerName,
+      customerEmail,
+      customerPhone,
+      jewelleryDetails,
+      purpose,
+      otp
+    });
+
+    console.log("Generated OTP:", otp);
+    console.log("Saved Request:", newRequest);
+
+    // ✅ Format phone number properly for Twilio
+    const formattedPhone = customerPhone.startsWith('+91') 
+      ? customerPhone 
+      : `+91${customerPhone}`;
+
+    await client.messages.create({
+      body: `Your OTP for Jewellery transaction is: ${otp}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: formattedPhone,
+    });
+
+    res.status(201).json({
+      message: "Request created and OTP sent",
+      requestId: newRequest._id
+    });
+
+  } catch (error) {
+    console.error("❌ Create Request Error:", error);
+    res.status(500).json({ message: "Server Error: " + error.message });
+  }
+};
+
   
 
 // ✅ Verify OTP
