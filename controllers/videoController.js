@@ -63,14 +63,21 @@ export const getVideos = async (req, res) => {
 // const client = twilio(accountSid, authToken);
 
 export const sendWhatsAppMessage = async (req, res) => {
-    const { to, messageBody, videoUrl } = req.body;
-  
     try {
+      const { to, messageBody, videoUrl } = req.body;
+  
+      // ✅ Validate phone number
+      if (!to || !/^\d{10}$/.test(to)) {
+        return res.status(400).json({ message: "Invalid phone number format. Use 10-digit Indian number." });
+      }
+  
+      // ✅ Compose full message
       const fullMessage = `${messageBody}\n${videoUrl}`;
-      
+  
+      // ✅ Send WhatsApp message via Twilio
       const message = await client.messages.create({
-        from: 'whatsapp:+14155238886', // Twilio sandbox
-        to: `whatsapp:${to}`,
+        from: 'whatsapp:+14155238886', // Twilio sandbox number
+        to: `whatsapp:+91${to}`,        // Automatically formats with +91
         body: fullMessage,
       });
   
@@ -79,11 +86,7 @@ export const sendWhatsAppMessage = async (req, res) => {
   
     } catch (error) {
       console.error("❌ Error sending WhatsApp:", error.message);
-      res.status(500).json({ message: "Failed", error: error.message });
+      res.status(500).json({ message: "Failed to send WhatsApp message", error: error.message });
     }
   };
-  
-  
-
-
   
