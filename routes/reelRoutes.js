@@ -4,7 +4,7 @@ import { uploadReel, getAllReels } from '../controllers/reelController.js';
 
 const router = express.Router();
 
-// Multer Setup
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
