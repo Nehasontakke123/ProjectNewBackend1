@@ -28,31 +28,35 @@ const razorpay = new Razorpay({
 
 
 // POST /api/payment/create-order
+
 export const createOrder = async (req, res) => {
   const { amount, userId, repairId } = req.body;
 
   const options = {
-    amount,
+    amount: amount * 100, // Convert to paise
     currency: "INR",
     receipt: `receipt_${Date.now()}`,
   };
 
-  const order = await razorpayInstance.orders.create(options);
+  try {
+    const order = await razorpay.orders.create(options);
 
-  // Save to DB (initial status = pending)
-  const payment = new Payment({
-    userId,
-    repairId,
-    amount,
-    transactionId: order.id,
-    status: "pending",
-  });
-  await payment.save();
+    const payment = new Payment({
+      userId,
+      repairId,
+      amount,
+      transactionId: order.id,
+      status: "pending",
+    });
 
-  res.json({ order });
+    await payment.save();
+
+    res.json({ order });
+  } catch (error) {
+    console.error("Error creating Razorpay order:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
 };
-
-
 
 
 // POST /api/payment/verify
