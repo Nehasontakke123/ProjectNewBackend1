@@ -1,7 +1,10 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
 // import multer from "multer";
@@ -23,7 +26,7 @@ import './cron/goldPriceCron.js'; // Start cron job
 import designRoutes from './routes/designRoutes.js';
 import reelRoutes from './routes/reelRoutes.js'
 
-dotenv.config();
+// dotenv.config();
 dbConnect(process.env.DBURL, process.env.DBNAME);
 
 const app = express();
