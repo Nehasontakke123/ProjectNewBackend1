@@ -15,7 +15,7 @@ import { createOrder, verifyPayment } from "../controllers/paymentController.js"
 const router = express.Router();
 
 // POST: Create Razorpay Order
-router.post("/create-order", createOrder);
+router.post("/createOrder", createOrder);
 
 // POST: Verify Payment after success
 router.post("/verify", verifyPayment);
