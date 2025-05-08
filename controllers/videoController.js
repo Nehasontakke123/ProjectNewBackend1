@@ -88,7 +88,6 @@
   
   
 
-
 import fs from 'fs';
 import path from 'path';
 import Video from '../models/VideoModel.js';
@@ -97,7 +96,7 @@ import Twilio from 'twilio';
 // Twilio credentials from environment variables
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;  // Use the updated number
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;  // Ensure you are using the correct Twilio number
 const client = Twilio(accountSid, authToken);
 
 // ✅ Function to upload video and send WhatsApp message with video call link
@@ -123,7 +122,8 @@ export const uploadVideo = async (req, res) => {
         // ✅ WhatsApp Message
         const messageBody = `👋 Hello! You have a video call.\n\n🔗 Join Zoom: ${zoomLink}\n📹 Uploaded Video: ${videoUrl}`;
 
-        await client.messages.create({
+        // Send WhatsApp message using Twilio
+        const message = await client.messages.create({
             body: messageBody,
             from: `whatsapp:${twilioPhoneNumber}`,  // Use the updated Twilio phone number
             to: `whatsapp:${phoneNumber}`,
@@ -151,24 +151,32 @@ export const getVideos = async (req, res) => {
     }
 };
 
-// ✅ Standalone WhatsApp message sender
+// ✅ Standalone WhatsApp message sender with improved error handling
 export const sendWhatsAppMessage = async (req, res) => {
     const { to, messageBody, videoUrl } = req.body;
-  
+
     try {
-      const fullMessage = `${messageBody}\n${videoUrl}`;
-      
-      const message = await client.messages.create({
-        from: `whatsapp:${twilioPhoneNumber}`, // Updated Twilio phone number
-        to: `whatsapp:+91${to}`,
-        body: fullMessage,
-      });
-  
-      console.log("✅ WhatsApp Sent:", message.sid);
-      res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
-  
+        // Ensure the phone number is in the correct format
+        const formattedPhoneNumber = to.startsWith('whatsapp:') ? to : `whatsapp:+91${to}`;
+
+        // Combine the message body and video URL
+        const fullMessage = `${messageBody}\n${videoUrl}`;
+
+        console.log("Sending WhatsApp message to:", formattedPhoneNumber);
+        console.log("Message content:", fullMessage);
+
+        // Send message via Twilio
+        const message = await client.messages.create({
+            from: `whatsapp:${twilioPhoneNumber}`,  // Updated Twilio phone number
+            to: formattedPhoneNumber,
+            body: fullMessage,
+        });
+
+        console.log("✅ WhatsApp Sent:", message.sid);
+        res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
+
     } catch (error) {
-      console.error("❌ Error sending WhatsApp:", error.message);
-      res.status(500).json({ message: "Failed", error: error.message });
+        console.error("❌ Error sending WhatsApp:", error.message);
+        res.status(500).json({ message: "Failed to send WhatsApp message", error: error.message });
     }
 };
