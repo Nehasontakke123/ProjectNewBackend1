@@ -1,44 +1,54 @@
-import fs from 'fs';
-import path from 'path';
-import Video from '../models/VideoModel.js';
-import Twilio from 'twilio';
+// import fs from 'fs';
+// import path from 'path';
+// import Video from '../models/VideoModel.js';
+// import Twilio from 'twilio';
 
-// Twilio credentials from environment variables
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;  // Ensure you are using the correct Twilio number
-const client = Twilio(accountSid, authToken);
+// // Twilio credentials from environment variables
+// const accountSid = process.env.TWILIO_ACCOUNT_SID;
+// const authToken = process.env.TWILIO_AUTH_TOKEN;
+// const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;  // Ensure you are using the correct Twilio number
+// const client = Twilio(accountSid, authToken);
 
-// ✅ Standalone SMS sender with improved error handling
-export const sendSMS = async (req, res) => {
-    const { to, messageBody, videoUrl } = req.body;
+// // ✅ Function to upload video and send WhatsApp message with video call link
+// export const uploadVideo = async (req, res) => {
+//     try {
+//         const phoneNumber = req.body.phoneNumber;
 
-    try {
-        // Ensure the phone number is in the correct format
-        const formattedPhoneNumber = to.startsWith('whatsapp:') ? to.replace('whatsapp:', '') : to;  // Remove whatsapp prefix if exists
+//         // ✅ Cloudinary video URL (after upload)
+//         const uploadedVideo = req.file;
+//         const videoUrl = uploadedVideo.path; // This is secure_url from Cloudinary
 
-        // Combine the message body and video URL
-        const fullMessage = `${messageBody}\n${videoUrl}`;
+//         // ✅ Save video info to MongoDB
+//         const newVideo = new Video({
+//             videoUrl: videoUrl,
+//             phoneNumber: phoneNumber,
+//         });
 
-        console.log("Sending SMS to:", formattedPhoneNumber);
-        console.log("Message content:", fullMessage);
+//         await newVideo.save();
 
-        // Send SMS via Twilio
-        const message = await client.messages.create({
-            from: twilioPhoneNumber,  // Twilio phone number, used for SMS
-            to: formattedPhoneNumber, // The recipient's phone number
-            body: fullMessage,        // The content of the SMS
-        });
+//         // ✅ Fixed Zoom Meeting Link (no file name should be added here)
+//         const zoomLink = `https://us05web.zoom.us/j/84223349123?pwd=IKmZfbMtmJuQsSofbm78f8xi1pzJ1z.1`;
 
-        console.log("✅ SMS Sent:", message.sid);
-        res.status(200).json({ message: "SMS sent successfully", sid: message.sid });
+//         // ✅ WhatsApp Message
+//         const messageBody = `👋 Hello! You have a video call.\n\n🔗 Join Zoom: ${zoomLink}\n📹 Uploaded Video: ${videoUrl}`;
 
-    } catch (error) {
-        console.error("❌ Error sending SMS:", error.message);
-        res.status(500).json({ message: "Failed to send SMS", error: error.message });
-    }
-};
+//         // Send WhatsApp message using Twilio
+//         const message = await client.messages.create({
+//             body: messageBody,
+//             from: `whatsapp:${twilioPhoneNumber}`,  // Use the updated Twilio phone number
+//             to: `whatsapp:${phoneNumber}`,
+//         });
 
+//         res.status(200).json({
+//             message: "✅ Video uploaded and WhatsApp message sent successfully",
+//             videoUrl: videoUrl, // Cloudinary public URL
+//         });
+
+//     } catch (err) {
+//         console.error("❌ Error uploading video:", err);
+//         res.status(500).json({ error: err.message });
+//     }
+// };
 
 // // ✅ Function to get all video data
 // export const getVideos = async (req, res) => {
@@ -51,51 +61,106 @@ export const sendSMS = async (req, res) => {
 //     }
 // };
 
-// ✅ Function to upload video and send SMS with video call link
+// // ✅ Standalone WhatsApp message sender with improved error handling
+// export const sendWhatsAppMessage = async (req, res) => {
+//     const { to, messageBody, videoUrl } = req.body;
+
+//     try {
+//         // Ensure the phone number is in the correct format
+//         const formattedPhoneNumber = to.startsWith('whatsapp:') ? to : `whatsapp:+91${to}`;
+
+//         // Combine the message body and video URL
+//         const fullMessage = `${messageBody}\n${videoUrl}`;
+
+//         console.log("Sending WhatsApp message to:", formattedPhoneNumber);
+//         console.log("Message content:", fullMessage);
+
+//         // Send message via Twilio
+//         const message = await client.messages.create({
+//             from: `whatsapp:${twilioPhoneNumber}`,  // Updated Twilio phone number
+//             to: formattedPhoneNumber,
+//             body: fullMessage,
+//         });
+
+//         console.log("✅ WhatsApp Sent:", message.sid);
+//         res.status(200).json({ message: "WhatsApp message sent", sid: message.sid });
+
+//     } catch (error) {
+//         console.error("❌ Error sending WhatsApp:", error.message);
+//         res.status(500).json({ message: "Failed to send WhatsApp message", error: error.message });
+//     }
+// };
+
+
+
+
+import fs from 'fs';
+import path from 'path';
+import Video from '../models/VideoModel.js';
+import Twilio from 'twilio';
+
+// ✅ Twilio credentials from environment variables
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const client = Twilio(accountSid, authToken);
+
+// ✅ Upload Video and Send SMS (Mobile Text)
 export const uploadVideo = async (req, res) => {
     try {
         const phoneNumber = req.body.phoneNumber;
 
-        // ✅ Cloudinary video URL (after upload)
         const uploadedVideo = req.file;
-        const videoUrl = uploadedVideo.path; // This is secure_url from Cloudinary
+        const videoUrl = uploadedVideo.path;
 
-        // ✅ Save video info to MongoDB
         const newVideo = new Video({
-            videoUrl: videoUrl,
-            phoneNumber: phoneNumber,
+            filePath: videoUrl,
+            filename: uploadedVideo.originalname,
         });
 
         await newVideo.save();
 
-        // ✅ Fixed Zoom Meeting Link (no file name should be added here)
+        // ✅ Fixed Zoom link
         const zoomLink = `https://us05web.zoom.us/j/84223349123?pwd=IKmZfbMtmJuQsSofbm78f8xi1pzJ1z.1`;
 
-        // ✅ SMS message content
-        const messageBody = `👋 Hello! You have a video call.\n\n🔗 Join Zoom: ${zoomLink}\n📹 Uploaded Video: ${videoUrl}`;
+        const smsMessage = `👋 Hello! You have a video call.\nJoin Zoom: ${zoomLink}`;
 
-        // Send SMS using Twilio
-        await sendSMS({
-            body: {
-                to: phoneNumber,  // The phone number to send the SMS to
-                messageBody: messageBody,  // The content of the SMS message
-                videoUrl: videoUrl // URL of the uploaded video
-            }
+        // ✅ Send SMS
+        const message = await client.messages.create({
+            body: smsMessage,
+            from: twilioPhoneNumber,
+            to: phoneNumber, // ✅ No 'whatsapp:' prefix
         });
 
         res.status(200).json({
             message: "✅ Video uploaded and SMS sent successfully",
-            videoUrl: videoUrl, // Cloudinary public URL
+            videoUrl: videoUrl,
+            smsSid: message.sid,
         });
 
     } catch (err) {
-        console.error("❌ Error uploading video:", err);
+        console.error("❌ Error uploading video or sending SMS:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
+// ✅ Optional: Standalone SMS sender
+export const sendSMSMessage = async (req, res) => {
+    const { to, messageBody, videoUrl } = req.body;
 
+    try {
+        const fullMessage = `${messageBody}\n${videoUrl || ''}`;
 
+        const message = await client.messages.create({
+            from: twilioPhoneNumber,
+            to: to, // Ex: +919123456789
+            body: fullMessage,
+        });
 
+        res.status(200).json({ message: "✅ SMS sent", sid: message.sid });
 
-
+    } catch (error) {
+        console.error("❌ Error sending SMS:", error.message);
+        res.status(500).json({ message: "Failed to send SMS", error: error.message });
+    }
+};
